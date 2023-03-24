@@ -4,6 +4,7 @@
 #include <dht.h> // DHT22 Dependency
 #include <SPI.h> // SD Card Module Dependency
 #include <SD.h> // SD Card Module Dependency
+#include "uRTCLib.h" // RTC DS1307 Dependency
 
 // ======= INITIAL VARIABLES DECLARATIONS =======
 // ==== TEMPERATURE SENSORS (DS18B20) ====
@@ -32,8 +33,27 @@ int accurrent_old_val = 0;
 float accurrent_rms;
 float accurrent_IRMS;
 
+// ==== ZMPT101B CONFIGURATION ====
+double acvoltage_sensorValue1 = 0;
+double acvoltage_sensorValue2 = 0;
+int acvoltage_crosscount = 0;
+int acvoltage_climb_flag = 0;
+int acvoltage_val[100];
+int acvoltage_max_v = 0;
+double acvoltage_VmaxD = 0;
+double acvoltage_VeffD = 0;
+double acvoltage_Veff = 0;
 
-// ==== VARIABLES TO TRACK CONNECTED DEVIES ====
+// ==== RTC DS1307 CONFIGURATION ====
+uRTCLib rtc(0x68);
+// char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}; // EN
+char daysOfTheWeek[7][12] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"}; // ID
+
+String rtc_day = "";
+String rtc_date = "";
+String rtc_clock = "";
+
+// ======== VARIABLES TO TRACK CONNECTED DEVIES ========
 int temperatureSensor = 0;
 int temperatureHumidSensor = 0;
 int acCurrentSensor = 0;
@@ -62,16 +82,71 @@ void printAddress(DeviceAddress deviceAddress) {
 // function to start buzzer
 void buzzerStartFunc() {
   tone(buzzerPin, 1000);
-  delay(100);
+  delay(50);
   noTone(buzzerPin);
-  delay(100);
+  delay(50);
   tone(buzzerPin, 1000);
-  delay(100);
+  delay(50);
   noTone(buzzerPin);
-  delay(100);
+  delay(50);
   tone(buzzerPin, 1000);
-  delay(100);
+  delay(50);
   noTone(buzzerPin);
+  delay(50);
+}
+void buzzerSOSFunc(){
+  // S
+  tone(buzzerPin, 1000);
+  delay(50);
+  noTone(buzzerPin);
+  delay(50);
+  tone(buzzerPin, 1000);
+  delay(50);
+  noTone(buzzerPin);
+  delay(50);
+  tone(buzzerPin, 1000);
+  delay(50);
+  noTone(buzzerPin);
+  delay(200);
+  // O
+  delay(50);
+  tone(buzzerPin, 1000);
+  delay(150);
+  noTone(buzzerPin);
+  delay(50);
+  tone(buzzerPin, 1000);
+  delay(150);
+  noTone(buzzerPin);
+  delay(50);
+  tone(buzzerPin, 1000);
+  delay(150);
+  noTone(buzzerPin);
+  delay(200);
+  // S
+  tone(buzzerPin, 1000);
+  delay(50);
+  noTone(buzzerPin);
+  delay(50);
+  tone(buzzerPin, 1000);
+  delay(50);
+  noTone(buzzerPin);
+  delay(50);
+  tone(buzzerPin, 1000);
+  delay(50);
+  noTone(buzzerPin);
+  delay(200);
+  delay(50);
+}
+void buzzerInitiating(){
+  //I
+  tone(buzzerPin, 1000);
+  delay(50);
+  noTone(buzzerPin);
+  delay(50);
+  tone(buzzerPin, 1000);
+  delay(50);
+  noTone(buzzerPin);
+  delay(50);
 }
 
 // function to loop DS18B20 Temperature Reading
@@ -79,6 +154,9 @@ void loopTemperatureSensors() {
   sensors.requestTemperatures(); // Send the command to get temperatures
   // Loop through each device, print out temperature data
   for(int i=0;i<numberOfDevices; i++) {
+    if (numberOfDevices>0) {
+      buzzerSOSFunc();
+    }
     // Search the wire for address
     if(sensors.getAddress(tempDeviceAddress, i)){
 
@@ -88,7 +166,7 @@ void loopTemperatureSensors() {
     Serial.print(",");
     }   
   }
-  delay(1000);
+  // delay(1000);
   Serial.println();
 }
 
@@ -99,7 +177,7 @@ void loopTemperatureHumidSensor() {
   float h = DHT.humidity;
   Serial.print(t);
   Serial.print(h);
-  delay(1000);
+  // delay(1000);
 }
 
 // function to write values in monitor array
@@ -142,16 +220,94 @@ void loopACCurrent() {
     Serial.print("IRMS: ");
     Serial.println(accurrent_IRMS);
     
-    delay(1000);
+    // delay(1000);
   }
 }
 
+// function to loop trough ZMPT101B voltage reading
+void loopACVoltage() {
+    for ( int i = 0; i < 100; i++ ) {
+    acvoltage_sensorValue1 = analogRead(A6);
+    if (analogRead(A6) > 511) {
+      acvoltage_val[i] = acvoltage_sensorValue1;
+    }
+    else {
+      acvoltage_val[i] = 0;
+    }
+    delay(1);
+  }
+
+  acvoltage_max_v = 0;
+
+  for ( int i = 0; i < 100; i++ )
+  {
+    if ( acvoltage_val[i] > acvoltage_max_v )
+    {
+      acvoltage_max_v = acvoltage_val[i];
+    }
+    acvoltage_val[i] = 0;
+  }
+  if (acvoltage_max_v != 0) {
+
+
+    acvoltage_VmaxD = acvoltage_max_v;
+    acvoltage_VeffD = acvoltage_VmaxD / sqrt(2);
+    acvoltage_Veff = (((acvoltage_VeffD - 420.76) / -90.24) * -210.2) + 210.2;
+  }
+  else {
+    acvoltage_Veff = 0;
+  }
+  Serial.print("Voltage: ");
+  Serial.println(acvoltage_Veff);
+  acvoltage_VmaxD = 0;
+
+  // delay(1000);
+}
+
+// function to loop trough time using RTC DS1307 Module
+void loopTime() {
+  rtc.refresh();
+
+  rtc_clock = (rtc.hour()-2);
+  rtc_clock.concat(":");
+  rtc_clock.concat((rtc.minute()));
+  rtc_clock.concat(":");
+  rtc_clock.concat((rtc.second()));
+
+  Serial.print("Clock: ");
+  Serial.print(rtc_clock);
+  Serial.println();
+
+  // Serial.print("Current Date & Time: ");
+  // Serial.print(rtc.year());
+  // Serial.print('/');
+  // Serial.print(rtc.month());
+  // Serial.print('/');
+  // Serial.print(rtc.day());
+
+  //Serial.print(" (");
+  //Serial.print(daysOfTheWeek[rtc.dayOfWeek()-1]);
+  //Serial.print(") ");
+
+  //Serial.print(rtc.hour());
+  //Serial.print(':');
+  //Serial.print(rtc.minute());
+  //Serial.print(':');
+  //Serial.println(rtc.second());
+  
+  delay(1000);
+}
+
+
+
+
 void setup() {  
   Serial.begin(9600);
+  delay(1000);
+  buzzerInitiating();
 
   // ==== SETUP FOR BUZZER ====
   pinMode(buzzerPin, OUTPUT);
-  buzzerStartFunc();
 
   // ==== SETUP FOR TEMPERATURE SENSORS ====
   sensors.begin();
@@ -163,33 +319,41 @@ void setup() {
   for(int i=0;i<numberOfDevices; i++) {
     // Search the wire for address
     if(sensors.getAddress(tempDeviceAddress, i)) {
-      if (i > 0){
-        buzzerStartFunc();
-      }
       Serial.print("Found device ");
       Serial.print(i, DEC);
       Serial.print(" with address: ");
       printAddress(tempDeviceAddress);
       Serial.println();
-    } else {
-      Serial.print("Found ghost device at ");
-      Serial.print(i, DEC);
-      Serial.print(" but could not detect address. Check power and cabling");
     }
+    // } else {
+    //   Serial.print("Found ghost device at ");
+    //   Serial.print(i, DEC);
+    //   Serial.print(" but could not detect address. Check power and cabling");
+    // }
   }
 
   // ==== SETUP FOR DHT22 (TEMPERATURE & HUMIDITY) ====
   // None
 
-  // ==== SETUP FOR MICROSD
+  // ==== SETUP FOR MICROSD ====
   // None
 
-  // ==== SETUP FOR ZMCT103C
+  // ==== SETUP FOR ZMCT103C ====
   pinMode(A7, INPUT); // Analog pin for current sensor ZMCT103C, adjust it for the arduino mega
 
+  // ==== SETUP FOR RTC DS1307 ====
+  URTCLIB_WIRE.begin();
+  // Comment out below line once you set the date & time.
+  // Following line sets the RTC with an explicit date & time
+  // for example to set January 13 2022 at 12:56 you would call:
+  // rtc.set(0, 56, 12, 5, 13, 1, 22);
+  // rtc.set(second, minute, hour, dayOfWeek, dayOfMonth, month, year)
+  // set day of week (1=Sunday, 7=Saturday)
+
+  // == SETUP READY TRIGGER ===
+  buzzerSOSFunc();
 }
 
-void loop() {
-  loopTemperatureSensors();
-  loopTemperatureHumidSensor();
+void loop() {  
+  loopTime();
 }
