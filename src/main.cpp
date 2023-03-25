@@ -28,12 +28,26 @@ File myFile;
 const int chipSelect = 10; // change this to match your SD shield or module;
 
 // ==== ZMCT103C CONFIGURATION ====
-#define calibration_const 355.55
+//#define calibration_const 355.55
+#define calibration_const 105.55
+// 1st sensor
 int accurrent_max_val;
 int accurrent_new_val;
 int accurrent_old_val = 0;
 float accurrent_rms;
 float accurrent_IRMS;
+// 2nd sensor
+int accurrent_max_val2;
+int accurrent_new_val2;
+int accurrent_old_val2 = 0;
+float accurrent_rms2;
+float accurrent_IRMS2;
+// 3rd sensor
+int accurrent_max_val3;
+int accurrent_new_val3;
+int accurrent_old_val3 = 0;
+float accurrent_rms3;
+float accurrent_IRMS3;
 
 // ==== ZMPT101B CONFIGURATION ====
 double acvoltage_sensorValue1 = 0;
@@ -240,8 +254,7 @@ void loopACCurrent1() {
   accurrent_new_val = analogRead(A7);
   if(accurrent_new_val > accurrent_old_val) {
     accurrent_old_val = accurrent_new_val;
-  }
-  
+  }  
   else {
     delayMicroseconds(50);
     accurrent_new_val = analogRead(A7);
@@ -255,6 +268,50 @@ void loopACCurrent1() {
     
     Serial.print("IRMS: ");
     Serial.println(accurrent_IRMS);
+    
+    // delay(1000);
+  }
+}
+void loopACCurrent2() {
+  accurrent_new_val2 = analogRead(A8);
+  if(accurrent_new_val2 > accurrent_old_val2) {
+    accurrent_old_val2 = accurrent_new_val2;
+  }  
+  else {
+    delayMicroseconds(50);
+    accurrent_new_val2 = analogRead(A8);
+    if(accurrent_new_val2 < accurrent_old_val2) {
+      accurrent_max_val2 = accurrent_old_val2;
+      accurrent_old_val2 = 0;
+    }
+    
+    accurrent_rms2 = accurrent_max_val2 * 5.00 * 0.707 / 1024;
+    accurrent_IRMS2 = accurrent_rms2 * calibration_const;
+    
+    Serial.print("IRMS2: ");
+    Serial.println(accurrent_IRMS2);
+    
+    // delay(1000);
+  }
+}
+void loopACCurrent3() {
+  accurrent_new_val3 = analogRead(A9);
+  if(accurrent_new_val3 > accurrent_old_val3) {
+    accurrent_old_val3 = accurrent_new_val3;
+  }  
+  else {
+    delayMicroseconds(50);
+    accurrent_new_val3 = analogRead(A9);
+    if(accurrent_new_val3 < accurrent_old_val3) {
+      accurrent_max_val3 = accurrent_old_val3;
+      accurrent_old_val3 = 0;
+    }
+    
+    accurrent_rms3 = accurrent_max_val3 * 5.00 * 0.707 / 1024;
+    accurrent_IRMS3 = accurrent_rms3 * calibration_const;
+    
+    Serial.print("IRMS3: ");
+    Serial.println(accurrent_IRMS3);
     
     // delay(1000);
   }
@@ -284,11 +341,9 @@ void loopACVoltage() {
     acvoltage_val[i] = 0;
   }
   if (acvoltage_max_v != 0) {
-
-
     acvoltage_VmaxD = acvoltage_max_v;
     acvoltage_VeffD = acvoltage_VmaxD / sqrt(2);
-    acvoltage_Veff = (((acvoltage_VeffD - 420.76) / -90.24) * -210.2) + 210.2;
+    acvoltage_Veff = (((acvoltage_VeffD - 420.76) / -90.24) * -210.2) + 110.2;
   }
   else {
     acvoltage_Veff = 0;
@@ -372,6 +427,11 @@ void onRelay4(){
 
 
 void setup() {  
+    // ==== SETUP FOR ZMCT103C ====
+  pinMode(A7, INPUT); // Analog pin for current sensor ZMCT103C, adjust it for the arduino mega
+  pinMode(A8, INPUT);
+  pinMode(A9, INPUT);
+
   Serial.begin(9600);
   arduino.begin(9600); // For serial communication
   delay(1000);
@@ -408,9 +468,6 @@ void setup() {
   // ==== SETUP FOR MICROSD ====
   // None
 
-  // ==== SETUP FOR ZMCT103C ====
-  pinMode(A7, INPUT); // Analog pin for current sensor ZMCT103C, adjust it for the arduino mega
-
   // ==== SETUP FOR RTC DS1307 ====
   URTCLIB_WIRE.begin();
   // Comment out below line once you set the date & time.
@@ -438,5 +495,8 @@ void setup() {
 void loop() {  
   //arduino.println("Halo");
   loopACCurrent1();
+  loopACCurrent2();
+  loopACCurrent3();
+  loopACVoltage();
   delay(1000);
 }
