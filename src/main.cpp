@@ -1,10 +1,11 @@
 #include <Arduino.h>
 #include <OneWire.h> // DS18B20 Dependency
 #include <DallasTemperature.h> // DS18B20 Dependency
-#include <dht.h> // DHT22 Dependency
+#include "DHT.h"
 #include <SPI.h> // SD Card Module Dependency
 #include <SD.h> // SD Card Module Dependency
 #include "uRTCLib.h" // RTC DS1307 Dependency
+#include <SoftwareSerial.h> // Serial communication to ESP32 dependency
 
 // ======= INITIAL VARIABLES DECLARATIONS =======
 // ==== TEMPERATURE SENSORS (DS18B20) ====
@@ -15,8 +16,9 @@ int numberOfDevices; // Number of temperature devices found
 DeviceAddress tempDeviceAddress; // We'll use this variable to store a found device address
 
 // ==== DHT22 CONFIGURATION ====
-#define dataPin 8
-dht DHT;
+#define DHTPIN 8
+#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+DHT dht(DHTPIN, DHTTYPE);
 
 // === BUZZER CONFIGURATION ===
 int buzzerPin = 5;
@@ -52,6 +54,9 @@ char daysOfTheWeek[7][12] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'
 String rtc_day = "";
 String rtc_date = "";
 String rtc_clock = "";
+
+// ==== SERIAL COMMUNICATION CONFIGURATION ====
+SoftwareSerial arduino(13, 12); // RX, TX
 
 // ======== VARIABLES TO TRACK CONNECTED DEVIES ========
 int temperatureSensor = 0;
@@ -92,7 +97,7 @@ void buzzerStartFunc() {
   tone(buzzerPin, 1000);
   delay(50);
   noTone(buzzerPin);
-  delay(50);
+  delay(200);
 }
 void buzzerSOSFunc(){
   // S
@@ -172,12 +177,22 @@ void loopTemperatureSensors() {
 
 // function to loop trhoush DHT22 Sensor
 void loopTemperatureHumidSensor() {
-  int readData = DHT.read22(dataPin); // DHT22/AM2302
-  float t = DHT.temperature;
-  float h = DHT.humidity;
+  delay(1000);
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+  
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t) ) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+  Serial.print("Temperature: ");
   Serial.print(t);
+  Serial.print(" *C\t");
+  Serial.print("Humidity: ");
   Serial.print(h);
-  // delay(1000);
+  Serial.println(" %");
 }
 
 // function to write values in monitor array
@@ -274,7 +289,7 @@ void loopTime() {
   rtc_clock.concat(":");
   rtc_clock.concat((rtc.second()));
 
-  Serial.print("Clock: ");
+  //Serial.print("Clock: ");
   Serial.print(rtc_clock);
   Serial.println();
 
@@ -303,6 +318,7 @@ void loopTime() {
 
 void setup() {  
   Serial.begin(9600);
+  arduino.begin(9600); // For serial communication
   delay(1000);
   buzzerInitiating();
 
@@ -333,7 +349,7 @@ void setup() {
   }
 
   // ==== SETUP FOR DHT22 (TEMPERATURE & HUMIDITY) ====
-  // None
+  dht.begin();
 
   // ==== SETUP FOR MICROSD ====
   // None
@@ -355,5 +371,6 @@ void setup() {
 }
 
 void loop() {  
-  loopTime();
+  arduino.println("Halo");
+  delay(1000);
 }

@@ -1,14 +1,14 @@
 # ToDos
 
 ## Module & Sensor Testing
-- [ ] DS18B20 (Temperature)
-- [ ] DHT22 (Temperature & Humidity)
+- [ ] DS18B20 (Temperature) -> constraint: new sensor required
+- [ ] DHT22 (Temperature & Humidity) -> constraint: bad soldering from manufacture
 - [ ] ZMCT101C (AC Current)
 - [ ] Voltage Current
 - [ ] 6 Channel Relay
 - [ ] SD Card Module
-- [ ] RTC Module (Digital -> 21, 22)
-- [ ] Buzzer (Digital -> 4)
+- [X] RTC Module (Digital -> 21, 22)
+- [X] Buzzer (Digital -> 4)
 
 ## Tidying Up
 ### Pack each variables to global variables
@@ -20,5 +20,6 @@
 - [ ] SD Card Module
 - [ ] RTC Module
 ### Serial Communication with ESP32
-- [ ] Develop serial communication program to ESP32
+- [X] Develop serial communication program to ESP32 (Should be common ground)
 - [ ] Relay switch feedback
+- [ ] Convert all data to string
