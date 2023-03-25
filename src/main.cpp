@@ -51,9 +51,15 @@ uRTCLib rtc(0x68);
 // char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}; // EN
 char daysOfTheWeek[7][12] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"}; // ID
 
-String rtc_day = "";
-String rtc_date = "";
-String rtc_clock = "";
+// ==== RELAY CONFIGURATION ====
+int relay_1 = 34;
+int relay_2 = 35;
+int relay_3 = 36;
+int relay_4 = 37;
+int relay_5 = 38;
+int relay_6 = 39;
+volatile byte relayState = LOW;
+
 
 // ==== SERIAL COMMUNICATION CONFIGURATION ====
 SoftwareSerial arduino(13, 12); // RX, TX
@@ -68,6 +74,21 @@ int rtcModule = 0;
 int espBoard = 0;
 int buzzer = 0;
 int reeferRelay = 0;
+
+// ==== MAIN VALUES VARIABLE HOLDER ====
+// RTC CLOCK
+String rtc_day = "";
+String rtc_date = "";
+String rtc_clock = "";
+// DS18B20 (TEMPERATURE)
+// DHT22
+// AC VOLTAGE
+// AC CURRENT
+// RELAY
+int relaystate1 = 0;
+int relaystate2 = 0;
+int relaystate3 = 0;
+int relaystate4 = 0;
 
 // ==== VARIABLES TO BE CONTAINED TO AN ARRAY
 int monitoredVal [] = {}; // {temperature-1, temperature-2, temperature-3, temperature-4, temperature-5, temperature-6, temperature-7, temperature-humid-1, ac-current-1, ac-current-2, ac-current-3, ac-voltage-1}
@@ -215,7 +236,7 @@ void writeMonitorSDCard() {
 }
 
 // function to loop SINGLE AC current sensor ZMCT103C
-void loopACCurrent() {
+void loopACCurrent1() {
   accurrent_new_val = analogRead(A7);
   if(accurrent_new_val > accurrent_old_val) {
     accurrent_old_val = accurrent_new_val;
@@ -313,14 +334,47 @@ void loopTime() {
   delay(1000);
 }
 
-
+// funcion to calculate COP
+// function to calculate Power (Watt)
+// function to turn off relay 1
+void offRelay1(){
+  digitalWrite(relay_1, LOW);
+}
+void offRelay2(){
+  digitalWrite(relay_2, LOW);
+}
+void offRelay3(){
+  digitalWrite(relay_3, LOW);
+}
+void offRelay4(){
+  digitalWrite(relay_4, LOW);
+}
+void offAllRelay() {
+  digitalWrite(relay_1, LOW);
+  digitalWrite(relay_2, LOW);
+  digitalWrite(relay_3, LOW);
+  digitalWrite(relay_4, LOW);
+  digitalWrite(relay_5, LOW);
+  digitalWrite(relay_6, LOW);
+}
+void onRelay1(){
+  digitalWrite(relay_1, HIGH);
+}
+void onRelay2(){
+  digitalWrite(relay_2, HIGH);
+}
+void onRelay3(){
+  digitalWrite(relay_3, HIGH);
+}
+void onRelay4(){
+  digitalWrite(relay_4, HIGH);
+}
 
 
 void setup() {  
   Serial.begin(9600);
   arduino.begin(9600); // For serial communication
   delay(1000);
-  buzzerInitiating();
 
   // ==== SETUP FOR BUZZER ====
   pinMode(buzzerPin, OUTPUT);
@@ -366,11 +420,23 @@ void setup() {
   // rtc.set(second, minute, hour, dayOfWeek, dayOfMonth, month, year)
   // set day of week (1=Sunday, 7=Saturday)
 
+  // ==== SETUP FOR 6-CHANNEL RELAY MODULE ====
+  pinMode(relay_1, OUTPUT);
+  pinMode(relay_2, OUTPUT);
+  pinMode(relay_3, OUTPUT);
+  pinMode(relay_4, OUTPUT);
+  digitalWrite(relay_1, HIGH);
+  digitalWrite(relay_2, HIGH);
+  digitalWrite(relay_3, HIGH);
+  digitalWrite(relay_4, HIGH);
+
   // == SETUP READY TRIGGER ===
-  buzzerSOSFunc();
+  // buzzerSOSFunc();
+  buzzerInitiating();
 }
 
 void loop() {  
-  arduino.println("Halo");
+  //arduino.println("Halo");
+  loopACCurrent1();
   delay(1000);
 }

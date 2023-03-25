@@ -5,7 +5,7 @@
 - [ ] DHT22 (Temperature & Humidity) -> constraint: bad soldering from manufacture
 - [ ] ZMCT101C (AC Current)
 - [ ] Voltage Current
-- [ ] 6 Channel Relay
+- [X] 6 Channel Relay (34, 35, 36, 37)
 - [ ] SD Card Module
 - [X] RTC Module (Digital -> 21, 22)
 - [X] Buzzer (Digital -> 4)
@@ -20,6 +20,12 @@
 - [ ] SD Card Module
 - [ ] RTC Module
 ### Serial Communication with ESP32
-- [X] Develop serial communication program to ESP32 (Should be common ground)
+- [X] Develop serial communication program to ESP32 (Should be common ground) (Pin -> 13, 12 //RX, TX)
 - [ ] Relay switch feedback
 - [ ] Convert all data to string
+
+## Arduino I/O Pin List
+### Analog
+### Digital
+### Power
+### Communication
