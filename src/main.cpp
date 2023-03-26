@@ -5,7 +5,7 @@
 #include <SPI.h> // SD Card Module Dependency
 #include <SD.h> // SD Card Module Dependency
 #include "uRTCLib.h" // RTC DS1307 Dependency
-#include <SoftwareSerial.h> // Serial communication to ESP32 dependency
+#include <SoftwareSerial.h> // Serial communication to Nextion/ESP32 dependency
 
 // ======= INITIAL VARIABLES DECLARATIONS =======
 // ==== TEMPERATURE SENSORS (DS18B20) ====
@@ -77,6 +77,7 @@ volatile byte relayState = LOW;
 
 // ==== SERIAL COMMUNICATION CONFIGURATION ====
 SoftwareSerial arduino(13, 12); // RX, TX
+SoftwareSerial lcd(2, 3); //RX, TX
 
 // ======== VARIABLES TO TRACK CONNECTED DEVIES ========
 int temperatureSensor = 0;
@@ -108,6 +109,19 @@ int relaystate4 = 0;
 int monitoredVal [] = {}; // {temperature-1, temperature-2, temperature-3, temperature-4, temperature-5, temperature-6, temperature-7, temperature-humid-1, ac-current-1, ac-current-2, ac-current-3, ac-voltage-1}
 int controlledVal [] = {}; // {relay-1, relay-2, relay-3}
 int componentStatis [] = {};
+
+// ==== VARIABLES FOR NEXTION HMI DISPLAY ====
+String rtcDayVal = "";
+String rtcClockVal = "";
+int tempInsideVal = 0;
+int humidInsideVal = 0;
+int tempAmbientVal = 0;
+String copVal = "";
+String powerVal = "";
+int tempPCM1Val = 0;
+int tempPCM2Val = 0;
+String assetStatusVal = "";
+String uptimeVal = "";
 
 // ======== INITIAL FUNCTIONS DECLARATIONS ========
 // ==== TEMPERATURE SENSORS (DS18B20) ====
@@ -425,6 +439,44 @@ void onRelay4(){
   digitalWrite(relay_4, HIGH);
 }
 
+// function to update HMI value display
+void updateNextionDisplay(){
+  // Dashboard
+  lcd.print("rtcDayVal.val=");
+  lcd.print(rtcDayVal);
+  lcd.println();
+  lcd.print("rtcClockVal.val=");
+  lcd.print(rtcClockVal);
+  lcd.println();
+  lcd.print("humidInsideVal.val=");
+  lcd.print(humidInsideVal);
+  lcd.println();
+  lcd.print("tempAmbientVal.val=");
+  lcd.print(tempAmbientVal);
+  lcd.println();
+  lcd.print("copVal.val=");
+  lcd.print(copVal);
+  lcd.println();
+  lcd.print("tempPCM1Val.val=");
+  lcd.print(tempPCM1Val);
+  lcd.println();
+  lcd.print("tempPCM2Val.val=");
+  lcd.print(tempPCM2Val);
+  lcd.println();
+  lcd.print("assetStatusVal.val=");
+  lcd.print(assetStatusVal);
+  lcd.println();
+  lcd.print("uptimeVal.val=");
+  lcd.print(uptimeVal);
+  lcd.println();
+  nextionWrite();
+}
+void nextionWrite() {
+  lcd.write(0xff);
+  lcd.write(0xff);
+  lcd.write(0xff);
+}
+
 
 void setup() {  
     // ==== SETUP FOR ZMCT103C ====
@@ -487,6 +539,9 @@ void setup() {
   digitalWrite(relay_3, HIGH);
   digitalWrite(relay_4, HIGH);
 
+  // ==== SETUP FOR NEXTION DISPLAY ====
+  lcd.begin(9600);
+
   // == SETUP READY TRIGGER ===
   // buzzerSOSFunc();
   buzzerInitiating();
@@ -494,9 +549,5 @@ void setup() {
 
 void loop() {  
   //arduino.println("Halo");
-  loopACCurrent1();
-  loopACCurrent2();
-  loopACCurrent3();
-  loopACVoltage();
   delay(1000);
 }

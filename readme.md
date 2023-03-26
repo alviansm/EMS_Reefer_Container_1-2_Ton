@@ -9,6 +9,7 @@
 - [ ] SD Card Module
 - [X] RTC Module (Digital -> 21, 22)
 - [X] Buzzer (Digital -> 4)
+- [ ] Nextion display (Digital -> 2, 3) to ()
 
 ## Tidying Up
 ### Pack each variables to global variables
