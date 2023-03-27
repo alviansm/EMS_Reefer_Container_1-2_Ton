@@ -77,7 +77,7 @@ volatile byte relayState = LOW;
 
 // ==== SERIAL COMMUNICATION CONFIGURATION ====
 SoftwareSerial arduino(13, 12); // RX, TX
-SoftwareSerial lcd(2, 3); //RX, TX
+SoftwareSerial lcd(6, 7); //RX, TX
 
 // ======== VARIABLES TO TRACK CONNECTED DEVIES ========
 int temperatureSensor = 0;
@@ -111,17 +111,19 @@ int controlledVal [] = {}; // {relay-1, relay-2, relay-3}
 int componentStatis [] = {};
 
 // ==== VARIABLES FOR NEXTION HMI DISPLAY ====
+// dashboard
 String rtcDayVal = "";
 String rtcClockVal = "";
-int tempInsideVal = 0;
-int humidInsideVal = 0;
-int tempAmbientVal = 0;
+String tempInsideVal = "";
+String humidInsideVal = "";
+String tempAmbientVal = "";
 String copVal = "";
 String powerVal = "";
-int tempPCM1Val = 0;
-int tempPCM2Val = 0;
+String tempPCM1Val = "";
+String tempPCM2Val = "";
 String assetStatusVal = "";
 String uptimeVal = "";
+// control
 
 // ======== INITIAL FUNCTIONS DECLARATIONS ========
 // ==== TEMPERATURE SENSORS (DS18B20) ====
@@ -439,42 +441,52 @@ void onRelay4(){
   digitalWrite(relay_4, HIGH);
 }
 
-// function to update HMI value display
-void updateNextionDisplay(){
-  // Dashboard
-  lcd.print("rtcDayVal.val=");
-  lcd.print(rtcDayVal);
-  lcd.println();
-  lcd.print("rtcClockVal.val=");
-  lcd.print(rtcClockVal);
-  lcd.println();
-  lcd.print("humidInsideVal.val=");
-  lcd.print(humidInsideVal);
-  lcd.println();
-  lcd.print("tempAmbientVal.val=");
-  lcd.print(tempAmbientVal);
-  lcd.println();
-  lcd.print("copVal.val=");
-  lcd.print(copVal);
-  lcd.println();
-  lcd.print("tempPCM1Val.val=");
-  lcd.print(tempPCM1Val);
-  lcd.println();
-  lcd.print("tempPCM2Val.val=");
-  lcd.print(tempPCM2Val);
-  lcd.println();
-  lcd.print("assetStatusVal.val=");
-  lcd.print(assetStatusVal);
-  lcd.println();
-  lcd.print("uptimeVal.val=");
-  lcd.print(uptimeVal);
-  lcd.println();
-  nextionWrite();
-}
+// function to write arduino scripts to nextion display
 void nextionWrite() {
   lcd.write(0xff);
   lcd.write(0xff);
   lcd.write(0xff);
+}
+// function to update HMI value display
+void updateNextionDisplay() {
+  // Temporary testing
+  int kentang = random(-20, 30);
+  int kentang2 = random(0, 100);
+  tempAmbientVal = String(kentang);
+  humidInsideVal = String(kentang2);
+  // Dashboard
+  lcd.print("rtcDayVal.txt=");
+  lcd.print(rtcDayVal);
+  nextionWrite();
+  lcd.print("rtcClockVal.txt=");
+  lcd.print(rtcClockVal);
+  nextionWrite();
+  lcd.print("humidInsideVal.txt=");
+  lcd.print('"');
+  lcd.print(humidInsideVal);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("tempAmbientVal.txt=");
+  lcd.print(tempAmbientVal);
+  lcd.write(0xff);
+  lcd.write(0xff);
+  lcd.write(0xff);
+  lcd.print("copVal.txt=");
+  lcd.print(copVal);
+  nextionWrite();
+  lcd.print("tempPCM1Val.txt=");
+  lcd.print(tempPCM1Val);
+  nextionWrite();;
+  lcd.print("tempPCM2Val.txt=");
+  lcd.print(tempPCM2Val);
+  nextionWrite();
+  lcd.print("assetStatusVal.txt=");
+  lcd.print(assetStatusVal);
+  nextionWrite();
+  lcd.print("uptimeVal.txt=");
+  lcd.print(uptimeVal);
+  nextionWrite(); 
+  // Details
 }
 
 
@@ -549,5 +561,11 @@ void setup() {
 
 void loop() {  
   //arduino.println("Halo");
+  Serial.print("tempAmbientVal.txt=");
+  Serial.print('"');
+  Serial.print(humidInsideVal);
+  Serial.print('"');
+  Serial.println();
+  updateNextionDisplay();
   delay(1000);
 }
