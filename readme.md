@@ -7,7 +7,7 @@
 - [ ] Voltage Current
 - [X] 6 Channel Relay (34, 35, 36, 37)
 - [ ] SD Card Module
-- [X] RTC Module (Digital -> 21, 22)
+- [X] RTC Module (Digital -> 20 (SDA), 21 (SCL))
 - [X] Buzzer (Digital -> 4)
 - [ ] Nextion display (Digital -> 2, 3) to ()
 

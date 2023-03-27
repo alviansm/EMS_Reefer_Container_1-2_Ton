@@ -77,7 +77,7 @@ volatile byte relayState = LOW;
 
 // ==== SERIAL COMMUNICATION CONFIGURATION ====
 SoftwareSerial arduino(13, 12); // RX, TX
-SoftwareSerial lcd(6, 7); //RX, TX
+SoftwareSerial lcd(2, 3); //RX, TX
 
 // ======== VARIABLES TO TRACK CONNECTED DEVIES ========
 int temperatureSensor = 0;
@@ -377,32 +377,16 @@ void loopTime() {
 
   rtc_clock = (rtc.hour()-2);
   rtc_clock.concat(":");
-  rtc_clock.concat((rtc.minute()));
+  rtc_clock.concat((rtc.minute())+29);
   rtc_clock.concat(":");
   rtc_clock.concat((rtc.second()));
 
-  //Serial.print("Clock: ");
-  Serial.print(rtc_clock);
-  Serial.println();
-
-  // Serial.print("Current Date & Time: ");
-  // Serial.print(rtc.year());
-  // Serial.print('/');
-  // Serial.print(rtc.month());
-  // Serial.print('/');
-  // Serial.print(rtc.day());
-
-  //Serial.print(" (");
-  //Serial.print(daysOfTheWeek[rtc.dayOfWeek()-1]);
-  //Serial.print(") ");
-
-  //Serial.print(rtc.hour());
-  //Serial.print(':');
-  //Serial.print(rtc.minute());
-  //Serial.print(':');
-  //Serial.println(rtc.second());
-  
-  delay(1000);
+  rtc_day = daysOfTheWeek[rtc.dayOfWeek()-1];
+  rtc_date = rtc.day()+11;
+  rtc_date.concat("-");
+  rtc_date.concat(rtc.month()+2);
+  rtc_date.concat("-");
+  rtc_date.concat(rtc.year()+1);
 }
 
 // funcion to calculate COP
@@ -449,17 +433,21 @@ void nextionWrite() {
 }
 // function to update HMI value display
 void updateNextionDisplay() {
-  // Temporary testing
-  int kentang = random(-20, 30);
-  int kentang2 = random(0, 100);
-  tempAmbientVal = String(kentang);
-  humidInsideVal = String(kentang2);
+  // Putting Things together
+  rtcDayVal = rtc_day;
+  rtcDayVal.concat(", ");
+  rtcDayVal.concat(rtc_date);
+  rtcClockVal = rtc_clock;
   // Dashboard
   lcd.print("rtcDayVal.txt=");
+  lcd.print('"');
   lcd.print(rtcDayVal);
+  lcd.print('"');
   nextionWrite();
   lcd.print("rtcClockVal.txt=");
+  lcd.print('"');
   lcd.print(rtcClockVal);
+  lcd.print('"');
   nextionWrite();
   lcd.print("humidInsideVal.txt=");
   lcd.print('"');
@@ -467,18 +455,24 @@ void updateNextionDisplay() {
   lcd.print('"');
   nextionWrite();
   lcd.print("tempAmbientVal.txt=");
+  lcd.print('"');
   lcd.print(tempAmbientVal);
-  lcd.write(0xff);
-  lcd.write(0xff);
-  lcd.write(0xff);
+  lcd.print('"');
+  nextionWrite();
   lcd.print("copVal.txt=");
+  lcd.print('"');
   lcd.print(copVal);
+  lcd.print('"');
   nextionWrite();
   lcd.print("tempPCM1Val.txt=");
+  lcd.print('"');
   lcd.print(tempPCM1Val);
+  lcd.print('"');
   nextionWrite();;
   lcd.print("tempPCM2Val.txt=");
+  lcd.print('"');
   lcd.print(tempPCM2Val);
+  lcd.print('"');
   nextionWrite();
   lcd.print("assetStatusVal.txt=");
   lcd.print(assetStatusVal);
@@ -489,6 +483,10 @@ void updateNextionDisplay() {
   // Details
 }
 
+// putting things together
+void thingsTogether() {
+  loopTime();
+}
 
 void setup() {  
     // ==== SETUP FOR ZMCT103C ====
@@ -498,6 +496,8 @@ void setup() {
 
   Serial.begin(9600);
   arduino.begin(9600); // For serial communication
+  // ==== SETUP FOR NEXTION DISPLAY ====
+  lcd.begin(9600);
   delay(1000);
 
   // ==== SETUP FOR BUZZER ====
@@ -550,22 +550,14 @@ void setup() {
   digitalWrite(relay_2, HIGH);
   digitalWrite(relay_3, HIGH);
   digitalWrite(relay_4, HIGH);
-
-  // ==== SETUP FOR NEXTION DISPLAY ====
-  lcd.begin(9600);
-
+  
   // == SETUP READY TRIGGER ===
   // buzzerSOSFunc();
   buzzerInitiating();
 }
 
 void loop() {  
-  //arduino.println("Halo");
-  Serial.print("tempAmbientVal.txt=");
-  Serial.print('"');
-  Serial.print(humidInsideVal);
-  Serial.print('"');
-  Serial.println();
+  thingsTogether();
   updateNextionDisplay();
   delay(1000);
 }
