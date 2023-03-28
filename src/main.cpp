@@ -25,7 +25,7 @@ int buzzerPin = 5;
 
 // ==== MICROSD CONFIGURATION ====
 File myFile;
-const int chipSelect = 10; // change this to match your SD shield or module;
+const int chipSelect = 53; // change this to match your SD shield or module;
 
 // ==== ZMCT103C CONFIGURATION ====
 //#define calibration_const 355.55
@@ -124,6 +124,28 @@ String tempPCM2Val = "";
 String assetStatusVal = "";
 String uptimeVal = "";
 // control
+
+// ==== VARIABLES FOR MICROSD - LOCAL STORAGE ====
+String completeRTC1SD = "";
+String temp1SD = "";
+String temp2SD = "";
+String temp3SD = "";
+String temp4SD = "";
+String temp5SD = "";
+String temp6SD = "";
+String temp7SD = "";
+String humidSD = "";
+String current1SD = "";
+String current2SD = "";
+String current3SD = "";
+String voltage1SD = "";
+String power1SD = "";
+String cop1SD = "";
+String pcm1PickloadSD = "";
+String pcm1FrozenPointSD = "";
+String uptime1SD = "";
+String iteration1SD = "";
+String price1SD = "";
 
 // ======== INITIAL FUNCTIONS DECLARATIONS ========
 // ==== TEMPERATURE SENSORS (DS18B20) ====
@@ -250,15 +272,55 @@ void loopTemperatureHumidSensor() {
 void writeMonitorSDCard() {
   myFile = SD.open("eco_reefer_container_data.csv", FILE_WRITE);
   if (myFile) {
+    String completeDataPerRowSD = "";
+    // concat all available data for sd card
+    completeDataPerRowSD.concat(completeRTC1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp2SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp3SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp4SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp5SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp6SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp7SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(current1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(current2SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(current3SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(voltage1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(humidSD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(power1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(cop1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(pcm1PickloadSD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(pcm1FrozenPointSD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(uptime1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(iteration1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(price1SD);
+
     // if the data could be opened
-    int len = sizeof(monitoredVal)/sizeof(monitoredVal[0]);
-    for(int i =0; i<len; i++) {
-      myFile.print(monitoredVal[i]);
-      if (!(i == len-1)) {
-        myFile.print(",");
-      }
-    }
-    myFile.println(",");
+    // print heading to sd card
+    myFile.print("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,current_1,current_2,current_3,voltage_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh");    
+    // print data to sd card
+    myFile.println(completeDataPerRowSD);
+    // close the sd card
+    myFile.close();
   } else {
     // if the file didn't open, print an error:
     Serial.println("error opening eco_reefer_container_data.csv");
