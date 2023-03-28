@@ -270,6 +270,13 @@ void loopTemperatureHumidSensor() {
 
 // function to write values in monitor array
 void writeMonitorSDCard() {
+  // please run this function after time loop ds1307 module so the date could be written properly
+  completeRTC1SD = rtc_day;
+  completeRTC1SD.concat("/");
+  completeRTC1SD.concat(rtc_date);
+  completeRTC1SD.concat("/");
+  completeRTC1SD.concat(rtc_clock);
+
   myFile = SD.open("eco_reefer_container_data.csv", FILE_WRITE);
   if (myFile) {
     String completeDataPerRowSD = "";

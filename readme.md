@@ -1,4 +1,4 @@
-# ToDos
+# Project Information
 
 ## Module Information
 Notes: ***Power connection not included, 5 V for modules and sensors***
@@ -65,30 +65,47 @@ Notes: ***Power connection not included, 5 V for modules and sensors***
 #### Nextion Display
 |*No.*|*Arduino*|*Module*|
 | ------------- | ------------- | ------------- |
-|1|2|TX|
-|2|3|RX|
+|1|2 (RX)|TX|
+|2|3 (TX)|RX|
+### ESP32
+|*No.*|*Arduino*|*Module*|
+| ------------- | ------------- | ------------- |
+|1|12 (TX)|17 (RX)|
+|2|13 (RX)|16 (TX)|
 
-## Module & Sensor Testing
-- [ ] DS18B20 (Temperature) -> constraint: new sensor required
-- [ ] DHT22 (Temperature & Humidity) -> constraint: bad soldering from manufacture
-- [ ] ZMCT101C (AC Current)
-- [ ] Voltage Current
-- [X] 6 Channel Relay (34, 35, 36, 37)
-- [ ] SD Card Module
-- [X] RTC Module (Digital -> 20 (SDA), 21 (SCL))
-- [X] Buzzer (Digital -> 4)
-- [ ] Nextion display (Digital -> 2, 3) to ()
 
-## Tidying Up
-### Pack each variables to global variables
+## ToDos
+### Module & Sensor Testing
+- [X] DS18B20
+- [X] ZMCT101C
+- [X] ZMPT101B
+- [X] 6 Channel Relay
+- [X] RTC Module
+- [X] Buzzer
+- [X] Nextion display
+
+### Tidying Up
+#### Pack each variables to global variables
 - [X] DS18B20 (Temperature)
 - [X] DHT22 (Temperature & Humidity)
 - [X] ZMCT101C (AC Current)
 - [X] Voltage Current
-- [ ] 6 Channel Relay
+- [X] 6 Channel Relay
 - [X] SD Card Module
 - [X] RTC Module
-### Serial Communication with ESP32
+#### Serial Communication with ESP32
 - [X] Develop serial communication program to ESP32 (Should be common ground) (Pin -> 13, 12 //RX, TX)
-- [ ] Relay switch feedback
 - [X] Convert all data to string
+
+### To Be Done
+- [ ] DHT22 Constraint: bad soldering from manufacture
+- [ ] SD Card Module
+- [ ] Relay switch feedback for Nextion Display (Dual-State display properties)
+- [ ] Relay switch feedback for ESP32 (IoT Dashboard web page feedback)
+
+### Coming Soon (Could be defered)
+- [ ] GSP Module NEOBLOX
+- [ ] Switch to Arduino Pro Mega for production
+
+### IoT Setup
+Notes: ***This controller is to be connected with another slave controller, that is ESP 32 using serial communication. Visit my another repositories to look at the code for ESP32 code.***
