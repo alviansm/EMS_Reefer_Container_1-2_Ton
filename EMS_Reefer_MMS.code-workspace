@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "EMS_Reefer_MMS_ESP32",
+			"path": "../EMS_Reefer_MMS_ESP32"
+		}
+	],
+	"settings": {}
+}

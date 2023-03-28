@@ -74,7 +74,6 @@ int relay_5 = 38;
 int relay_6 = 39;
 volatile byte relayState = LOW;
 
-
 // ==== SERIAL COMMUNICATION CONFIGURATION ====
 SoftwareSerial arduino(13, 12); // RX, TX
 SoftwareSerial lcd(2, 3); //RX, TX
@@ -126,6 +125,7 @@ String uptimeVal = "";
 // control
 
 // ==== VARIABLES FOR MICROSD - LOCAL STORAGE ====
+String SDCardFileName = "first";
 String completeRTC1SD = "";
 String temp1SD = "";
 String temp2SD = "";
@@ -268,6 +268,26 @@ void loopTemperatureHumidSensor() {
   Serial.println(" %");
 }
 
+// function to generate uui
+// function to write the header
+void writeHeaderSDCard() {
+  SDCardFileName = "kentang";
+  SDCardFileName.concat(".csv");
+
+  myFile = SD.open(SDCardFileName, FILE_WRITE);
+  if (myFile) {
+    // if the data could be opened
+    // print heading to sd card
+    myFile.println("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,current_1,current_2,current_3,voltage_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh");    
+    // close the sd card
+    myFile.close();
+  } 
+  else {
+    Serial.println("error opening ");
+    Serial.println(SDCardFileName);
+    buzzerSOSFunc();
+  }
+}
 // function to write values in monitor array
 void writeMonitorSDCard() {
   // please run this function after time loop ds1307 module so the date could be written properly
@@ -277,60 +297,61 @@ void writeMonitorSDCard() {
   completeRTC1SD.concat("/");
   completeRTC1SD.concat(rtc_clock);
 
-  myFile = SD.open("eco_reefer_container_data.csv", FILE_WRITE);
+  myFile = SD.open(SDCardFileName, FILE_WRITE);
   if (myFile) {
     String completeDataPerRowSD = "";
-    // concat all available data for sd card
-    completeDataPerRowSD.concat(completeRTC1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(temp1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(temp2SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(temp3SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(temp4SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(temp5SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(temp6SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(temp7SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(current1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(current2SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(current3SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(voltage1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(humidSD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(power1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(cop1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(pcm1PickloadSD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(pcm1FrozenPointSD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(uptime1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(iteration1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(price1SD);
+    
+    // check if any of the data has value
+    if ((completeRTC1SD.length()>0) || (temp1SD.length()>0) || (temp2SD.length()>0) || (temp2SD.length()>0) || (temp3SD.length()>0) || (temp4SD.length()>0) || (temp5SD.length()>0) || (temp6SD.length()>0) || (temp7SD.length()>0) || (current1SD.length()>0) || (current2SD.length()>0) || (current3SD.length()>0) || (voltage1SD.length()>0) || (humidSD.length()>0) || (power1SD.length()>0) || (cop1SD.length()>0) || (pcm1PickloadSD.length()>0) || (pcm1FrozenPointSD.length()>0) || (uptime1SD.length()>0) || (iteration1SD.length()>0) || (price1SD.length()>0)) {
+      // concat all available data for sd card
+      completeDataPerRowSD.concat(completeRTC1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(temp1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(temp2SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(temp3SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(temp4SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(temp5SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(temp6SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(temp7SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(current1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(current2SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(current3SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(voltage1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(humidSD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(power1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(cop1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(pcm1PickloadSD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(pcm1FrozenPointSD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(uptime1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(iteration1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(price1SD);
 
-    // if the data could be opened
-    // print heading to sd card
-    myFile.print("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,current_1,current_2,current_3,voltage_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh");    
-    // print data to sd card
-    myFile.println(completeDataPerRowSD);
-    // close the sd card
-    myFile.close();
+      // print data to sd card
+      myFile.println(completeDataPerRowSD);
+    }
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening eco_reefer_container_data.csv");
+    Serial.println("error opening ");
+    Serial.print(SDCardFileName);
+    buzzerSOSFunc();
   }
 }
 
@@ -518,6 +539,11 @@ void updateNextionDisplay() {
   lcd.print(rtcClockVal);
   lcd.print('"');
   nextionWrite();
+  lcd.print("tempInsideVal.txt=");
+  lcd.print('"');
+  lcd.print(tempInsideVal);
+  lcd.print('"');
+  nextionWrite();
   lcd.print("humidInsideVal.txt=");
   lcd.print('"');
   lcd.print(humidInsideVal);
@@ -544,10 +570,19 @@ void updateNextionDisplay() {
   lcd.print('"');
   nextionWrite();
   lcd.print("assetStatusVal.txt=");
+  lcd.print('"');
   lcd.print(assetStatusVal);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("powerVal.txt=");
+  lcd.print('"');
+  lcd.print(powerVal);
+  lcd.print('"');
   nextionWrite();
   lcd.print("uptimeVal.txt=");
+  lcd.print('"');
   lcd.print(uptimeVal);
+  lcd.print('"');
   nextionWrite(); 
   // Details
 }
@@ -599,7 +634,12 @@ void setup() {
   dht.begin();
 
   // ==== SETUP FOR MICROSD ====
-  // None
+  Serial.print("Initializing SD Card...");
+  if(!SD.begin(chipSelect)) {
+    Serial.println("initialization failed!");
+    buzzerSOSFunc();
+  }
+  Serial.println("initialization done.");
 
   // ==== SETUP FOR RTC DS1307 ====
   URTCLIB_WIRE.begin();
