@@ -109,6 +109,27 @@ int monitoredVal [] = {}; // {temperature-1, temperature-2, temperature-3, tempe
 int controlledVal [] = {}; // {relay-1, relay-2, relay-3}
 int componentStatis [] = {};
 
+// ==== SENSING VARIABLES FROM SENSOR ====
+// temporary used, to be changed to an array later. (if there's available time)
+// RTC DS1307 Modules
+String senseTime = "";
+// DS18B20
+String senseTemp1 = "";
+String senseTemp2 = "";
+String senseTemp3 = "";
+String senseTemp4 = "";
+String senseTemp5 = "";
+String senseTemp6 = "";
+String senseTemp7 = "";
+// DHT22
+String senseHumid = "";
+// ZMCT101C
+String senseCurrent1 = "";
+String senseCurrent2 = "";
+String senseCurrent3 = "";
+// ZMPT101
+String senseVoltage1 = "";
+
 // ==== VARIABLES FOR NEXTION HMI DISPLAY ====
 // dashboard
 String rtcDayVal = "";
@@ -268,11 +289,23 @@ void loopTemperatureHumidSensor() {
   Serial.println(" %");
 }
 
-// function to generate uui
+// function to generate random sd card file name
+void randomizeFileName() {
+  int random_length = 12;
+  int temporary_random_num = random(0, 9);
+  SDCardFileName = String(temporary_random_num);
+
+  for (int i=0;i<random_length;i++){
+    temporary_random_num = random(0,9);
+    SDCardFileName.concat(String(temporary_random_num));
+  }
+
+  // adding format file
+  SDCardFileName.concat(".CSV");
+}
 // function to write the header
 void writeHeaderSDCard() {
-  SDCardFileName = "kentang";
-  SDCardFileName.concat(".csv");
+  randomizeFileName();
 
   myFile = SD.open(SDCardFileName, FILE_WRITE);
   if (myFile) {
@@ -282,11 +315,46 @@ void writeHeaderSDCard() {
     // close the sd card
     myFile.close();
   } 
-  else {
-    Serial.println("error opening ");
-    Serial.println(SDCardFileName);
+  else {    
+    Serial.print("Error opening ");
+    Serial.print(SDCardFileName);
+    Serial.println();
     buzzerSOSFunc();
   }
+}
+// random value for demonstration purpose, unused in production
+void demoRandomSensingVal() {
+  senseTemp1 = String(random(-30, 30));
+  senseTemp2 = String(random(-30, 30));
+  senseTemp3 = String(random(-30, 30));
+  senseTemp4 = String(random(-30, 30));
+  senseTemp5 = String(random(-30, 30));
+  senseTemp6 = String(random(-30, 30));
+  senseTemp7 = String(random(-30, 30));
+  senseHumid = String(random(0, 100));
+  senseCurrent1 = String(random(-30, 30));
+  senseCurrent2 = String(random(-30, 30));
+  senseCurrent3 = String(random(-30, 30));
+  senseVoltage1 = String(random(-30, 30));
+  
+  temp1SD = senseTemp1;
+  temp2SD = senseTemp2;
+  temp3SD = senseTemp3;
+  temp4SD = senseTemp4;
+  temp5SD = senseTemp5;
+  temp6SD = senseTemp6;
+  temp7SD = senseTemp7;
+  humidSD = senseHumid;
+  current1SD = senseCurrent1;
+  current2SD = senseCurrent2;
+  current3SD = senseCurrent3;
+  voltage1SD = senseVoltage1;
+
+  tempInsideVal = senseTemp1;
+  tempAmbientVal = senseTemp2;
+  tempPCM1Val = senseTemp3;
+  tempPCM2Val = senseTemp4;
+  humidInsideVal = senseHumid;
 }
 // function to write values in monitor array
 void writeMonitorSDCard() {
@@ -346,12 +414,14 @@ void writeMonitorSDCard() {
 
       // print data to sd card
       myFile.println(completeDataPerRowSD);
+      myFile.close();
     }
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening ");
+    Serial.print("error writing ");
     Serial.print(SDCardFileName);
-    buzzerSOSFunc();
+    Serial.println();
+    // buzzerSOSFunc();
   }
 }
 
@@ -640,6 +710,7 @@ void setup() {
     buzzerSOSFunc();
   }
   Serial.println("initialization done.");
+  writeHeaderSDCard();
 
   // ==== SETUP FOR RTC DS1307 ====
   URTCLIB_WIRE.begin();
@@ -666,7 +737,9 @@ void setup() {
 }
 
 void loop() {  
+  demoRandomSensingVal();
   thingsTogether();
+  writeMonitorSDCard();
   updateNextionDisplay();
   delay(1000);
 }
