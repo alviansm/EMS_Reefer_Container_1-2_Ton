@@ -1,3 +1,8 @@
+/*
+  Written by: Alvians Maulana
+  Project Name: Development of IoT-Based Energy Management System of Hybrid Refrigeration Cycle (Phase Change Material - Vapour Compression Cycle) for Eco-Reefer Container
+  Year: 2023
+*/
 #include <Arduino.h>
 #include <OneWire.h> // DS18B20 Dependency
 #include <DallasTemperature.h> // DS18B20 Dependency
@@ -121,6 +126,7 @@ String senseTemp4 = "";
 String senseTemp5 = "";
 String senseTemp6 = "";
 String senseTemp7 = "";
+int sensorIteration = 0;
 // DHT22
 String senseHumid = "";
 // ZMCT101C
@@ -129,6 +135,25 @@ String senseCurrent2 = "";
 String senseCurrent3 = "";
 // ZMPT101
 String senseVoltage1 = "";
+// Raw Pressure Transducer 1
+String sensePressureTransducer1 = "";
+// Raw Pressure Transducer 2
+String sensePressureTransducer2 = "";
+// Raw Pressure Transducer 3
+String sensePressureTransducer3 = "";
+
+// ==== VARIABLES TO CALCUALTE COPs ====
+String calculatedCOP = "";
+float enthalpy4 = 0.00;
+float enthalpy3 = 0.00;
+float enthalpy2 = 0.00;
+float enthalpy1 = 0.00;
+float tempOutEvap = 0.00;
+float tempInEvap = 0.00;
+
+String calculatedPower = "";
+String calculatedUptime = "";
+String calculatedPCM1Pickload = "";
 
 // ==== VARIABLES FOR NEXTION HMI DISPLAY ====
 // dashboard
@@ -167,6 +192,8 @@ String pcm1FrozenPointSD = "";
 String uptime1SD = "";
 String iteration1SD = "";
 String price1SD = "";
+
+String globalCompleteSDCardData = "";
 
 // ======== INITIAL FUNCTIONS DECLARATIONS ========
 // ==== TEMPERATURE SENSORS (DS18B20) ====
@@ -253,7 +280,7 @@ void loopTemperatureSensors() {
   sensors.requestTemperatures(); // Send the command to get temperatures
   // Loop through each device, print out temperature data
   for(int i=0;i<numberOfDevices; i++) {
-    if (numberOfDevices>0) {
+    if (numberOfDevices<1) {
       buzzerSOSFunc();
     }
     // Search the wire for address
@@ -263,6 +290,30 @@ void loopTemperatureSensors() {
     float tempC = sensors.getTempC(tempDeviceAddress);
     Serial.print(tempC);
     Serial.print(",");
+    
+    // insert sensor
+    if (i==0) {
+      senseTemp1 = tempC;
+    }
+    if (i==1) {
+      senseTemp2 = tempC;
+    }
+    if (i==2) {
+      senseTemp3 = tempC;
+    }
+    if (i==3) {
+      senseTemp4 = tempC;
+    }
+    if (i==4) {
+      senseTemp6 = tempC;
+    }
+    if (i==5) {
+      senseTemp6 = tempC;
+    }
+    if (i==6) {
+      senseTemp7 = tempC;
+    }
+
     }   
   }
   // delay(1000);
@@ -287,11 +338,31 @@ void loopTemperatureHumidSensor() {
   Serial.print("Humidity: ");
   Serial.print(h);
   Serial.println(" %");
+
+  // insert sensor reading to global variable
+  senseHumid = h;
+}
+
+// function to convert from temperature to liquid enthalpy
+void temperatureToLEnthalpy(){
+  
+}
+
+// function to convert from temperature to vapour enthalpy
+void temperatureToVEnthalpy() {
+  tempOutEvap = temp2SD.toFloat();
+  enthalpy1 = ((0.53334*tempOutEvap)+363.52);
+}
+
+// function to calculate COP
+void calculateCOP() {
+  calculatedCOP = String((enthalpy1-enthalpy4)/(enthalpy2-enthalpy1));
 }
 
 // function to generate random sd card file name
 void randomizeFileName() {
-  int random_length = 12;
+  SDCardFileName = "";
+  int random_length = 4;
   int temporary_random_num = random(0, 9);
   SDCardFileName = String(temporary_random_num);
 
@@ -311,7 +382,7 @@ void writeHeaderSDCard() {
   if (myFile) {
     // if the data could be opened
     // print heading to sd card
-    myFile.println("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,current_1,current_2,current_3,voltage_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh");    
+    myFile.println("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,current_1,current_2,current_3,voltage_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh,raw_signal_pressure_1,raw_signal_pressure_2,raw_signal_pressure_3");    
     // close the sd card
     myFile.close();
   } 
@@ -355,15 +426,29 @@ void demoRandomSensingVal() {
   tempPCM1Val = senseTemp3;
   tempPCM2Val = senseTemp4;
   humidInsideVal = senseHumid;
+
 }
 // function to write values in monitor array
 void writeMonitorSDCard() {
   // please run this function after time loop ds1307 module so the date could be written properly
-  completeRTC1SD = rtc_day;
-  completeRTC1SD.concat("/");
-  completeRTC1SD.concat(rtc_date);
-  completeRTC1SD.concat("/");
-  completeRTC1SD.concat(rtc_clock);
+  completeRTC1SD = senseTime;
+  humidSD = senseHumid;
+  temp1SD = senseTemp1;
+  temp2SD = senseTemp2;
+  temp3SD = senseTemp3;
+  temp4SD = senseTemp4;
+  temp5SD = senseTemp5;
+  temp6SD = senseTemp6;
+  temp7SD = senseTemp7;
+  current1SD = senseCurrent1;
+  current2SD = senseCurrent2;
+  current3SD = senseCurrent3;
+  voltage1SD = senseVoltage1;
+
+  // Assumption
+  pcm1FrozenPointSD = "-22";
+  price1SD = "1699.53";
+  iteration1SD = "1";
 
   myFile = SD.open(SDCardFileName, FILE_WRITE);
   if (myFile) {
@@ -411,20 +496,37 @@ void writeMonitorSDCard() {
       completeDataPerRowSD.concat(iteration1SD);
       completeDataPerRowSD.concat(",");
       completeDataPerRowSD.concat(price1SD);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(sensePressureTransducer1);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(sensePressureTransducer2);
+      completeDataPerRowSD.concat(",");
+      completeDataPerRowSD.concat(sensePressureTransducer3);
 
       // print data to sd card
       myFile.println(completeDataPerRowSD);
       myFile.close();
+
+      globalCompleteSDCardData = completeDataPerRowSD;
     }
   } else {
     // if the file didn't open, print an error:
     Serial.print("error writing ");
     Serial.print(SDCardFileName);
     Serial.println();
-    // buzzerSOSFunc();
   }
 }
 
+// function to loop single pressure transducer
+void loopPressureTransducer1() {
+  sensePressureTransducer1 = String(analogRead(A5));
+}
+void loopPressureTransducer2() {
+  sensePressureTransducer2 = String(analogRead(A4));
+}
+void loopPressureTransducer3() {
+  sensePressureTransducer3 = String(analogRead(A3));
+}
 // function to loop SINGLE AC current sensor ZMCT103C
 void loopACCurrent1() {
   accurrent_new_val = analogRead(A7);
@@ -445,6 +547,9 @@ void loopACCurrent1() {
     Serial.print("IRMS: ");
     Serial.println(accurrent_IRMS);
     
+    // insert sensor reading to global value
+    senseCurrent1 = accurrent_IRMS;
+
     // delay(1000);
   }
 }
@@ -467,6 +572,9 @@ void loopACCurrent2() {
     Serial.print("IRMS2: ");
     Serial.println(accurrent_IRMS2);
     
+    // insert sensor reading to global value
+    senseCurrent2 = accurrent_IRMS2;
+
     // delay(1000);
   }
 }
@@ -489,6 +597,9 @@ void loopACCurrent3() {
     Serial.print("IRMS3: ");
     Serial.println(accurrent_IRMS3);
     
+    // insert sensor reading to global value
+    senseCurrent3 = accurrent_IRMS3;
+
     // delay(1000);
   }
 }
@@ -528,6 +639,9 @@ void loopACVoltage() {
   Serial.println(acvoltage_Veff);
   acvoltage_VmaxD = 0;
 
+  // insert sensor reading to global variable
+  senseVoltage1 = acvoltage_Veff;
+
   // delay(1000);
 }
 
@@ -535,18 +649,24 @@ void loopACVoltage() {
 void loopTime() {
   rtc.refresh();
 
-  rtc_clock = (rtc.hour()-2);
+  rtc_clock = (rtc.hour());
   rtc_clock.concat(":");
-  rtc_clock.concat((rtc.minute())+29);
+  rtc_clock.concat((rtc.minute()));
   rtc_clock.concat(":");
   rtc_clock.concat((rtc.second()));
 
-  rtc_day = daysOfTheWeek[rtc.dayOfWeek()-1];
+  rtc_day = daysOfTheWeek[rtc.dayOfWeek()];
   rtc_date = rtc.day()+11;
   rtc_date.concat("-");
-  rtc_date.concat(rtc.month()+2);
+  rtc_date.concat(rtc.month());
   rtc_date.concat("-");
-  rtc_date.concat(rtc.year()+1);
+  rtc_date.concat(rtc.year());
+
+  senseTime = rtc_day;
+  senseTime.concat("-");
+  senseTime.concat(rtc_date);
+  senseTime.concat("-");
+  senseTime.concat(rtc_clock);
 }
 
 // funcion to calculate COP
@@ -660,6 +780,15 @@ void updateNextionDisplay() {
 // putting things together
 void thingsTogether() {
   loopTime();
+  loopTemperatureHumidSensor();
+  loopTemperatureSensors();
+  loopACCurrent1();
+  loopACCurrent2();
+  loopACCurrent3();
+  loopACVoltage();
+  loopPressureTransducer1();
+  loopPressureTransducer2();
+  loopPressureTransducer3();
 }
 
 void setup() {  
@@ -732,14 +861,15 @@ void setup() {
   digitalWrite(relay_4, HIGH);
   
   // == SETUP READY TRIGGER ===
-  // buzzerSOSFunc();
   buzzerInitiating();
 }
 
 void loop() {  
-  demoRandomSensingVal();
+  // demoRandomSensingVal();
   thingsTogether();
   writeMonitorSDCard();
-  updateNextionDisplay();
+  // updateNextionDisplay();
+  Serial.println("Data: ");
+  Serial.print(globalCompleteSDCardData);
   delay(1000);
 }

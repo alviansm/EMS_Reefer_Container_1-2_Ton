@@ -39,6 +39,30 @@ Notes: ***Power connection not included, 5 V for modules and sensors***
 |4|Status||
 |5|Properties|Voltage|
 |6|Units|Volts|
+#### Pressure Transducer 1
+|*No.*|*Information*|*Value*|
+| ------------- | ------------- | ------------- |
+|1|Signal Type|Analog|
+|2|Pin Connection|A5|
+|4|Status|Un-converted to pressure, from signal|
+|5|Properties|Pressure (Supposedly)|
+|6|Units|Bar|
+#### Pressure Transducer 2
+|*No.*|*Information*|*Value*|
+| ------------- | ------------- | ------------- |
+|1|Signal Type|Analog|
+|2|Pin Connection|A4|
+|4|Status|Un-converted to pressure, from signal|
+|5|Properties|Pressure (Supposedly)|
+|6|Units|Bar|
+#### Pressure Transducer 3
+|*No.*|*Information*|*Value*|
+| ------------- | ------------- | ------------- |
+|1|Signal Type|Analog|
+|2|Pin Connection|A3|
+|4|Status|Un-converted to pressure, from signal|
+|5|Properties|Pressure (Supposedly)|
+|6|Units|Bar|
 ### Modules
 #### 6-Channel Relay
 |*No.*|*Information*|*Value*|
