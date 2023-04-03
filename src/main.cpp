@@ -358,7 +358,18 @@ void temperatureToVEnthalpy() {
 void calculateCOP() {
   calculatedCOP = String((enthalpy1-enthalpy4)/(enthalpy2-enthalpy1));
 }
-
+// fucntion to calculate power
+void calculatePower() {
+  calculatedPower = String(((senseCurrent1.toFloat()+senseCurrent2.toFloat()+senseCurrent3.toFloat())*senseVoltage1.toFloat()*0.8));
+}
+// function to calculate uptime
+void calculateUptime() {
+  calculatedUptime = "10";
+}
+// function to calculate PCM Pickload
+void calculatePCM1PickLoad() {
+  calculatedPCM1Pickload = "4";
+}
 // function to generate random sd card file name
 void randomizeFileName() {
   SDCardFileName = "";
@@ -446,6 +457,9 @@ void writeMonitorSDCard() {
   voltage1SD = senseVoltage1;
 
   // Assumption
+  uptime1SD = calculatedUptime;
+  power1SD = calculatedPower;
+  pcm1PickloadSD = calculatedPCM1Pickload;
   pcm1FrozenPointSD = "-22";
   price1SD = "1699.53";
   iteration1SD = "1";
@@ -790,6 +804,12 @@ void thingsTogether() {
   loopPressureTransducer2();
   loopPressureTransducer3();
 }
+void calculateFromThings() {
+  calculateCOP();
+  calculatePower();
+  calculateUptime();
+  calculatePCM1PickLoad();
+}
 
 void setup() {  
     // ==== SETUP FOR ZMCT103C ====
@@ -867,6 +887,7 @@ void setup() {
 void loop() {  
   // demoRandomSensingVal();
   thingsTogether();
+  calculateFromThings();
   writeMonitorSDCard();
   // updateNextionDisplay();
   Serial.println("Data: ");
