@@ -91,12 +91,23 @@ Notes: ***Power connection not included, 5 V for modules and sensors***
 | ------------- | ------------- | ------------- |
 |1|2 (RX)|TX|
 |2|3 (TX)|RX|
-### ESP32
+#### ESP32
 |*No.*|*Arduino*|*Module*|
 | ------------- | ------------- | ------------- |
 |1|12 (TX)|17 (RX)|
 |2|13 (RX)|16 (TX)|
-
+#### LED Indicator (3.3 V)
+|*No.*|*Arduino*|*Indicating*|
+| ------------- | ------------- | ------------- |
+|1|41|DS18B20|
+|2|42|DHT22|
+|3|43|ZMCT101C|
+|4|44|ZMPT101B|
+|5|45|SD Card Module|
+|6|46|RTC Module|
+|7|47|ESP32 Board|
+|8|48|5V Buzzer|
+|9|49|Relay Module|
 
 ## ToDos
 ### Module & Sensor Testing

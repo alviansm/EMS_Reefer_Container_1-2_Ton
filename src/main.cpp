@@ -83,16 +83,27 @@ volatile byte relayState = LOW;
 SoftwareSerial arduino(13, 12); // RX, TX
 SoftwareSerial lcd(2, 3); //RX, TX
 
+// === LED FOR INDICATOR CONFIGURATION ====
+#define LED1 41
+#define LED2 42
+#define LED3 43
+#define LED4 44
+#define LED5 45
+#define LED6 46
+#define LED7 47
+#define LED8 48
+#define LED9 49
+
 // ======== VARIABLES TO TRACK CONNECTED DEVIES ========
-int temperatureSensor = 0;
-int temperatureHumidSensor = 0;
-int acCurrentSensor = 0;
-int acVoltageSensor = 0;
-int sdCardModule = 0;
-int rtcModule = 0;
-int espBoard = 0;
-int buzzer = 0;
-int reeferRelay = 0;
+int statusTemperatureSensor = 0;
+int statusHumiditySensor = 0;
+int statusCurrentSensor = 0;
+int statusVoltageSensor = 0;
+int statusSDCardModule = 0;
+int statusRTCModule = 0;
+int statusESPBoard = 0;
+int statusBuzzerModule = 0;
+int statusRelayModule = 0;
 
 // ==== MAIN VALUES VARIABLE HOLDER ====
 // RTC CLOCK
@@ -393,11 +404,13 @@ void writeHeaderSDCard() {
   if (myFile) {
     // if the data could be opened
     // print heading to sd card
+    statusSDCardModule = 1;
     myFile.println("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,current_1,current_2,current_3,voltage_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh,raw_signal_pressure_1,raw_signal_pressure_2,raw_signal_pressure_3");    
     // close the sd card
     myFile.close();
   } 
   else {    
+    statusSDCardModule = 0;
     Serial.print("Error opening ");
     Serial.print(SDCardFileName);
     Serial.println();
@@ -530,7 +543,86 @@ void writeMonitorSDCard() {
     Serial.println();
   }
 }
+// function to check module and sensors connection
+void checkModuleStatus() {
+  if (senseTemp1.length() > 0 && senseTemp2.length() > 0 && senseTemp3.length() > 0 && senseTemp4.length() > 0 && senseTemp5.length() > 0 && senseTemp6.length() > 0 && senseTemp7.length() > 0) {
+    statusTemperatureSensor = 1;
+  } else {
+    statusTemperatureSensor = 0;
+  }
 
+  if (senseHumid.length() > 0) {
+    statusHumiditySensor = 1;
+  } else {
+    statusHumiditySensor = 0;
+  }
+
+  if (senseCurrent1.length() > 0 && senseCurrent2.length() > 0 && senseCurrent3.length() > 0) {
+    statusCurrentSensor = 1;
+  } else {
+    statusCurrentSensor = 0;
+  }
+
+  if (senseVoltage1.length() > 0) {
+    statusVoltageSensor = 1;
+  } else {
+    statusVoltageSensor = 0;
+  }
+
+  if (senseTime.length() > 0) {
+    statusRTCModule = 1;
+  } else {
+    statusRTCModule = 0;
+  } 
+
+  //
+  if (statusTemperatureSensor == 1) {
+    digitalWrite(LED1, HIGH);
+  } else {
+    digitalWrite(LED1, LOW);
+  }
+  if (statusHumiditySensor == 1) {
+    digitalWrite(LED2, HIGH);
+  } else {
+    digitalWrite(LED2, LOW);
+  }
+  if (statusCurrentSensor == 1) {
+    digitalWrite(LED3, HIGH);
+  } else {
+    digitalWrite(LED3, LOW);
+  }
+  if (statusVoltageSensor == 1) {
+    digitalWrite(LED4, HIGH);
+  } else {
+    digitalWrite(LED4, LOW);
+  }
+  if (statusSDCardModule == 1) {
+    digitalWrite(LED5, HIGH);
+  } else {
+    digitalWrite(LED5, LOW);
+  }
+  if (statusRTCModule == 1) {
+    digitalWrite(LED6, HIGH);
+  } else {
+    digitalWrite(LED6, LOW);
+  }
+  if (statusESPBoard == 1) {
+    digitalWrite(LED7, HIGH);
+  } else {
+    digitalWrite(LED7, LOW);
+  }
+  if (statusBuzzerModule == 1) {
+    digitalWrite(LED8, HIGH);
+  } else {
+    digitalWrite(LED8, LOW);
+  }
+  if (statusRelayModule == 1) {
+    digitalWrite(LED9, HIGH);
+  } else {
+    digitalWrite(LED9, LOW);
+  }
+
+}
 // function to loop single pressure transducer
 void loopPressureTransducer1() {
   sensePressureTransducer1 = String(analogRead(A5));
@@ -857,8 +949,10 @@ void setup() {
   if(!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     buzzerSOSFunc();
+    statusSDCardModule = 0;
   }
   Serial.println("initialization done.");
+  statusSDCardModule = 1;
   writeHeaderSDCard();
 
   // ==== SETUP FOR RTC DS1307 ====
@@ -879,6 +973,17 @@ void setup() {
   digitalWrite(relay_2, HIGH);
   digitalWrite(relay_3, HIGH);
   digitalWrite(relay_4, HIGH);
+
+  // ==== SETUP FOR LED INDICATOR ====
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(LED3, OUTPUT);
+  pinMode(LED4, OUTPUT);
+  pinMode(LED5, OUTPUT);
+  pinMode(LED6, OUTPUT);
+  pinMode(LED7, OUTPUT);
+  pinMode(LED8, OUTPUT);
+  pinMode(LED9, OUTPUT);
   
   // == SETUP READY TRIGGER ===
   buzzerInitiating();
@@ -886,6 +991,7 @@ void setup() {
 
 void loop() {  
   // demoRandomSensingVal();
+  checkModuleStatus();
   thingsTogether();
   calculateFromThings();
   writeMonitorSDCard();
