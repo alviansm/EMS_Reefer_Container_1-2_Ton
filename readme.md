@@ -144,3 +144,16 @@ Notes: ***Power connection not included, 5 V for modules and sensors***
 
 ### IoT Setup
 Notes: ***This controller is to be connected with another slave controller, that is ESP 32 using serial communication. Visit my another repositories to look at the code for ESP32 code.***
+
+# Temporary
+randomizeFileName();
+writeHeaderSDCard();
+demoRandomSensingVal();
+writeMonitorSDCard();
+checkModuleStatus();
+loopACCurrent1();
+loopTime();
+nextionWrite();
+updateNextionDisplay();
+thingsTogether();
+calculateFromThings();
