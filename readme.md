@@ -133,8 +133,8 @@ Notes: ***Power connection not included, 5 V for modules and sensors***
 - [X] Convert all data to string
 
 ### To Be Done
-- [ ] DHT22 Constraint: bad soldering from manufacture
-- [ ] SD Card Module
+- [X] DHT22 Constraint: bad soldering from manufacture
+- [X] SD Card Module
 - [ ] Relay switch feedback for Nextion Display (Dual-State display properties)
 - [ ] Relay switch feedback for ESP32 (IoT Dashboard web page feedback)
 
@@ -146,6 +146,19 @@ Notes: ***Power connection not included, 5 V for modules and sensors***
 Notes: ***This controller is to be connected with another slave controller, that is ESP 32 using serial communication. Visit my another repositories to look at the code for ESP32 code.***
 
 # Temporary
+printAddress();
+buzzerStartFunc();
+buzzerSOSFunc();
+buzzerInitiating();
+loopTemperatureSensors();
+loopTemperatureHumidSensor();
+temperature1ToLEnthalpy();
+temperature2ToEnthalpy();
+temperature3ToEnthalpy();
+calculateCOP();
+calculatePower();
+calculateUptime();
+calculatePCM1PickLoad();
 randomizeFileName();
 writeHeaderSDCard();
 demoRandomSensingVal();

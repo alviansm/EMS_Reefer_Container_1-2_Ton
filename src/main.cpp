@@ -6,7 +6,8 @@
 #include <Arduino.h>
 #include <OneWire.h> // DS18B20 Dependency
 #include <DallasTemperature.h> // DS18B20 Dependency
-#include "DHT.h"
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
 #include <SPI.h> // SD Card Module Dependency
 #include <SD.h> // SD Card Module Dependency
 #include "uRTCLib.h" // RTC DS1307 Dependency
@@ -22,8 +23,8 @@ DeviceAddress tempDeviceAddress; // We'll use this variable to store a found dev
 
 // ==== DHT22 CONFIGURATION ====
 #define DHTPIN 8
-#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
-DHT dht(DHTPIN, DHTTYPE);
+#define DHTTYPE DHT22
+DHT dht = DHT(DHTPIN, DHTTYPE);
 
 // === BUZZER CONFIGURATION ===
 int buzzerPin = 5;
@@ -41,29 +42,6 @@ int accurrent_new_val;
 int accurrent_old_val = 0;
 float accurrent_rms;
 float accurrent_IRMS;
-// 2nd sensor
-int accurrent_max_val2;
-int accurrent_new_val2;
-int accurrent_old_val2 = 0;
-float accurrent_rms2;
-float accurrent_IRMS2;
-// 3rd sensor
-int accurrent_max_val3;
-int accurrent_new_val3;
-int accurrent_old_val3 = 0;
-float accurrent_rms3;
-float accurrent_IRMS3;
-
-// ==== ZMPT101B CONFIGURATION ====
-double acvoltage_sensorValue1 = 0;
-double acvoltage_sensorValue2 = 0;
-int acvoltage_crosscount = 0;
-int acvoltage_climb_flag = 0;
-int acvoltage_val[100];
-int acvoltage_max_v = 0;
-double acvoltage_VmaxD = 0;
-double acvoltage_VeffD = 0;
-double acvoltage_Veff = 0;
 
 // ==== RTC DS1307 CONFIGURATION ====
 uRTCLib rtc(0x68);
@@ -110,20 +88,12 @@ int statusRelayModule = 0;
 String rtc_day = "";
 String rtc_date = "";
 String rtc_clock = "";
-// DS18B20 (TEMPERATURE)
-// DHT22
-// AC VOLTAGE
-// AC CURRENT
+String rtc_clock_minute = "";
 // RELAY
 int relaystate1 = 0;
 int relaystate2 = 0;
 int relaystate3 = 0;
 int relaystate4 = 0;
-
-// ==== VARIABLES TO BE CONTAINED TO AN ARRAY
-int monitoredVal [] = {}; // {temperature-1, temperature-2, temperature-3, temperature-4, temperature-5, temperature-6, temperature-7, temperature-humid-1, ac-current-1, ac-current-2, ac-current-3, ac-voltage-1}
-int controlledVal [] = {}; // {relay-1, relay-2, relay-3}
-int componentStatis [] = {};
 
 // ==== SENSING VARIABLES FROM SENSOR ====
 // temporary used, to be changed to an array later. (if there's available time)
@@ -139,6 +109,7 @@ String senseTemp6 = "";
 String senseTemp7 = "";
 int sensorIteration = 0;
 // DHT22
+String senseTemp8 = "";
 String senseHumid = "";
 // ZMCT101C
 String senseCurrent1 = "";
@@ -179,10 +150,28 @@ String tempPCM1Val = "";
 String tempPCM2Val = "";
 String assetStatusVal = "";
 String uptimeVal = "";
-// control
+// details
+String detailsT1 = "";
+String detailsT2 = "";
+String detailsT3 = "";
+String detailsT4 = "";
+String detailsT5 = "";
+String detailsT6 = "";
+String detailsT7 = "";
+String detailsT8 = "";
+String detailsVoltage = "";
+String detailsRH = "";
+String detailsPower = "";
+String detailsCOP = "";
+String detailsI1 = "";
+String detailsPick = "";
+String detailsFP = "";
+String detailsUptime = "";
+String detailsIter = "";
+String detailsPrice = "";
 
 // ==== VARIABLES FOR MICROSD - LOCAL STORAGE ====
-String SDCardFileName = "first";
+String SDCardFileName = "";
 String completeRTC1SD = "";
 String temp1SD = "";
 String temp2SD = "";
@@ -191,11 +180,9 @@ String temp4SD = "";
 String temp5SD = "";
 String temp6SD = "";
 String temp7SD = "";
+String temp8SD = "";
 String humidSD = "";
 String current1SD = "";
-String current2SD = "";
-String current3SD = "";
-String voltage1SD = "";
 String power1SD = "";
 String cop1SD = "";
 String pcm1PickloadSD = "";
@@ -207,13 +194,37 @@ String price1SD = "";
 String globalCompleteSDCardData = "";
 
 // ======== INITIAL FUNCTIONS DECLARATIONS ========
+void thingsTogether();
+void calculateFromThings();
+void updateNextionDisplay();
+void printAddress(DeviceAddress deviceAddress);
+void buzzerStartFunc();
+void buzzerSOSFunc();
+void buzzerInitiating();
+void loopTemperatureSensors();
+void loopTemperatureHumidSensor();
+void temperature1ToLEnthalpy();
+void temperature2ToEnthalpy();
+void temperature3ToEnthalpy();
+void calculateCOP();
+void calculatePower();
+void calculateUptime();
+void calculatePCM1PickLoad();
+void randomizeFileName();
+void writeHeaderSDCard();
+void demoRandomSensingVal();
+void writeMonitorSDCard();
+void checkModuleStatus();
+void loopACCurrent1();
+void loopTime();
+void nextionWrite();
 
-
+// ======== MAIN PROGRAM TO BE EXECUTED ========
 void setup() {  
-    // ==== SETUP FOR ZMCT103C ====
+  // ==== SETUP FOR ZMCT103C ====
   pinMode(A7, INPUT); // Analog pin for current sensor ZMCT103C, adjust it for the arduino mega
-  pinMode(A8, INPUT);
-  pinMode(A9, INPUT);
+  // pinMode(A8, INPUT);
+  // pinMode(A9, INPUT);
 
   Serial.begin(9600);
   arduino.begin(9600); // For serial communication
@@ -253,18 +264,18 @@ void setup() {
   // ==== SETUP FOR MICROSD ====
   Serial.print("Initializing SD Card...");
   if(!SD.begin(chipSelect)) {
-    Serial.println("initialization failed!");
+    Serial.println("SD card initialization failed!");
     buzzerSOSFunc();
     statusSDCardModule = 0;
   }
-  Serial.println("initialization done.");
+  Serial.println("SD card initialization done.");
   statusSDCardModule = 1;
   writeHeaderSDCard();
 
   // ==== SETUP FOR RTC DS1307 ====
   URTCLIB_WIRE.begin();
 
-  // ==== SETUP FOR 6-CHANNEL RELAY MODULE ====
+  // ==== SETUP FOR 6-CHANNEL RELAY MODULE (4 only used) ====
   pinMode(relay_1, OUTPUT);
   pinMode(relay_2, OUTPUT);
   pinMode(relay_3, OUTPUT);
@@ -423,14 +434,14 @@ void loopTemperatureSensors() {
 
 // function to loop trhoush DHT22 Sensor
 void loopTemperatureHumidSensor() {
-  delay(1000);
+  delay(2000);
   float h = dht.readHumidity();
   // Read temperature as Celsius (the default)
   float t = dht.readTemperature();
   
   // Check if any reads failed and exit early (to try again).
   if (isnan(h) || isnan(t) ) {
-    Serial.println("Failed to read from DHT sensor!");
+    Serial.print("Failed to read from DHT sensor!");
     return;
   }
   Serial.print("Temperature: ");
@@ -441,35 +452,51 @@ void loopTemperatureHumidSensor() {
   Serial.println(" %");
 
   // insert sensor reading to global variable
+  senseTemp8 = t;
   senseHumid = h;
 }
 
-// function to convert from temperature to liquid enthalpy
-void temperatureToLEnthalpy(){
-  
+void temperature1ToLEnthalpy(){
+  // Enthalpy at state 1 is determined by linear regression using equation that obtained by using Freon R-404a saturation table.
+  // State 1 of the cycle is supposed to be sat. vapor
+  float temperatureState1 = 0.00;
+  enthalpy1 = ((0.5334*(temperatureState1))+363.52); 
 }
 
-// function to convert from temperature to vapour enthalpy
-void temperatureToEnthalpy() {
-  tempOutEvap = temp2SD.toFloat();
-  enthalpy1 = ((0.53334*tempOutEvap)+363.52);
+void temperature2ToEnthalpy() {
+  // State 2 of the cycle is supposed to be sat. vapor
+  float temperatureState2 = 0.00;
+  enthalpy2 = ((0.5334*temperatureState2)+363.52);
 }
 
-// function to calculate COP
+void temperature3ToEnthalpy() {
+  // State 3 of the cycle is supposed to be sat. liquid
+  float temperatureState3 = 0.00;
+  enthalpy3 = ((1.4143*temperatureState3)+206.36);
+  // Assuming ideal cycle, enthalpy at state 4 is equal to enthalpy at state 3
+  enthalpy4 = enthalpy3;
+}
+
 void calculateCOP() {
   calculatedCOP = String((enthalpy1-enthalpy4)/(enthalpy2-enthalpy1));
 }
-// fucntion to calculate power
+
 void calculatePower() {
   calculatedPower = String(((senseCurrent1.toFloat())*220.00*0.80));
 }
-// function to calculate uptime
+
 void calculateUptime() {
-  calculatedUptime = "0";
+  String previous_minute = "";
+
+  previous_minute = rtc_clock_minute;
+  rtc_clock_minute = rtc.minute();
+  if (rtc_clock_minute != previous_minute) {
+    calculatedUptime = calculatedUptime+1;
+  }  
 }
-// function to calculate PCM Pickload
+
 void calculatePCM1PickLoad() {
-  calculatedPCM1Pickload = "4";
+  calculatedPCM1Pickload = "6"; // 6 hours by default
 }
 
 void randomizeFileName() {
@@ -491,12 +518,14 @@ void writeHeaderSDCard() {
   SDCardFileName = "";
   randomizeFileName();
 
+  delay(500);
   myFile = SD.open(SDCardFileName, FILE_WRITE);
   if (myFile) {
     // if the data could be opened
     // print heading to sd card
     statusSDCardModule = 1;
-    myFile.println("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,current_1,current_2,current_3,voltage_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh,raw_signal_pressure_1,raw_signal_pressure_2,raw_signal_pressure_3");    
+    // myFile.println("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,current_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh,raw_signal_pressure_1,raw_signal_pressure_2,raw_signal_pressure_3");
+    myFile.println("time,temperature_1,temperature_2,temperature_3,temperature_4,temperature_5,temperature_6,temperature_7,temperature_8,current_1,rh_1,power_1,cop_1,pcm_pickload,pcm_forzen_point,uptime,iteration,electric_bill_per_kwh");       
     // close the sd card
     myFile.close();
   } 
@@ -532,9 +561,6 @@ void demoRandomSensingVal() {
   temp7SD = senseTemp7;
   humidSD = senseHumid;
   current1SD = senseCurrent1;
-  current2SD = senseCurrent2;
-  current3SD = senseCurrent3;
-  voltage1SD = senseVoltage1;
 
   tempInsideVal = senseTemp1;
   tempAmbientVal = senseTemp2;
@@ -554,12 +580,10 @@ void writeMonitorSDCard() {
   temp5SD = senseTemp5;
   temp6SD = senseTemp6;
   temp7SD = senseTemp7;
+  temp8SD = senseTemp8;
   current1SD = senseCurrent1;
-  current2SD = senseCurrent2;
-  current3SD = senseCurrent3;
-  voltage1SD = senseVoltage1;
 
-  // Assumption
+  // Assumption & calculation
   uptime1SD = calculatedUptime;
   power1SD = calculatedPower;
   pcm1PickloadSD = calculatedPCM1Pickload;
@@ -570,56 +594,44 @@ void writeMonitorSDCard() {
   myFile = SD.open(SDCardFileName, FILE_WRITE);
   String completeDataPerRowSD = "";
   if (myFile) {
-    
-    
     // check if any of the data has value
-    if ((completeRTC1SD.length()>0) || (temp1SD.length()>0) || (temp2SD.length()>0) || (temp2SD.length()>0) || (temp3SD.length()>0) || (temp4SD.length()>0) || (temp5SD.length()>0) || (temp6SD.length()>0) || (temp7SD.length()>0) || (current1SD.length()>0) || (current2SD.length()>0) || (current3SD.length()>0) || (voltage1SD.length()>0) || (humidSD.length()>0) || (power1SD.length()>0) || (cop1SD.length()>0) || (pcm1PickloadSD.length()>0) || (pcm1FrozenPointSD.length()>0) || (uptime1SD.length()>0) || (iteration1SD.length()>0) || (price1SD.length()>0)) {
-      // concat all available data for sd card
-      completeDataPerRowSD.concat(completeRTC1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(temp1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(temp2SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(temp3SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(temp4SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(temp5SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(temp6SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(temp7SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(current1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(current2SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(current3SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(voltage1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(humidSD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(power1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(cop1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(pcm1PickloadSD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(pcm1FrozenPointSD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(uptime1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(iteration1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(price1SD);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(sensePressureTransducer1);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(sensePressureTransducer2);
-      completeDataPerRowSD.concat(",");
-      completeDataPerRowSD.concat(sensePressureTransducer3);
+    if ((completeRTC1SD.length()>0) || (temp1SD.length()>0) || (temp2SD.length()>0) || (temp2SD.length()>0) || (temp3SD.length()>0) || (temp4SD.length()>0) || (temp5SD.length()>0) || (temp6SD.length()>0) || (temp7SD.length()>0) || (temp8SD.length()>0) || (current1SD.length()>0) || (humidSD.length()>0) || (power1SD.length()>0) || (cop1SD.length()>0) || (pcm1PickloadSD.length()>0) || (pcm1FrozenPointSD.length()>0) || (uptime1SD.length()>0) || (iteration1SD.length()>0) || (price1SD.length()>0)) {
+    // concat all available data for sd card
+    completeDataPerRowSD.concat(completeRTC1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp2SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp3SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp4SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp5SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp6SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp7SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp8SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(current1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(humidSD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(power1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(cop1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(pcm1PickloadSD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(pcm1FrozenPointSD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(uptime1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(iteration1SD);
+    completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(price1SD);
 
       // print data to sd card
       myFile.println(completeDataPerRowSD);
@@ -650,13 +662,9 @@ void writeMonitorSDCard() {
     completeDataPerRowSD.concat(",");
     completeDataPerRowSD.concat(temp7SD);
     completeDataPerRowSD.concat(",");
+    completeDataPerRowSD.concat(temp8SD);
+    completeDataPerRowSD.concat(",");
     completeDataPerRowSD.concat(current1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(current2SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(current3SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(voltage1SD);
     completeDataPerRowSD.concat(",");
     completeDataPerRowSD.concat(humidSD);
     completeDataPerRowSD.concat(",");
@@ -673,12 +681,12 @@ void writeMonitorSDCard() {
     completeDataPerRowSD.concat(iteration1SD);
     completeDataPerRowSD.concat(",");
     completeDataPerRowSD.concat(price1SD);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(sensePressureTransducer1);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(sensePressureTransducer2);
-    completeDataPerRowSD.concat(",");
-    completeDataPerRowSD.concat(sensePressureTransducer3);
+    // completeDataPerRowSD.concat(",");
+    // completeDataPerRowSD.concat(sensePressureTransducer1);
+    // completeDataPerRowSD.concat(",");
+    // completeDataPerRowSD.concat(sensePressureTransducer2);
+    // completeDataPerRowSD.concat(",");
+    // completeDataPerRowSD.concat(sensePressureTransducer3);
 
     globalCompleteSDCardData = completeDataPerRowSD;
   }
@@ -772,8 +780,6 @@ void loopACCurrent1() {
   else {
     delayMicroseconds(50);
     accurrent_new_val = analogRead(A7);
-    Serial.println("Data raw: ");
-    Serial.print(accurrent_new_val);
     if(accurrent_new_val < accurrent_old_val) {
       accurrent_max_val = accurrent_old_val;
       accurrent_old_val = 0;
@@ -782,14 +788,15 @@ void loopACCurrent1() {
     accurrent_rms = accurrent_max_val * 5.00 * 0.707 / 1024;
     accurrent_IRMS = accurrent_rms * calibration_const;
     
-    Serial.print("IRMS: ");
-    Serial.println(accurrent_IRMS);
-    
     // insert sensor reading to global value
     senseCurrent1 = accurrent_IRMS;
 
     // delay(1000);
   }
+}
+
+void loopACCurrent1_alternative() {
+  return;
 }
 
 void loopTime() {
@@ -802,7 +809,7 @@ void loopTime() {
   rtc_clock.concat((rtc.second()));
 
   rtc_day = daysOfTheWeek[rtc.dayOfWeek()];
-  rtc_date = rtc.day()+11;
+  rtc_date = rtc.day();
   rtc_date.concat("-");
   rtc_date.concat(rtc.month());
   rtc_date.concat("-");
@@ -821,7 +828,41 @@ void nextionWrite() {
   lcd.write(0xff);
 }
 
+void displayVariableAcquire() {
+  // dashaboard
+  tempInsideVal = "";
+  humidInsideVal = "";
+  tempAmbientVal = "";
+  copVal = "";
+  tempPCM1Val = "";
+  tempPCM2Val = "";
+  assetStatusVal = "";
+  powerVal = "";
+  uptimeVal = "";
+  // details
+  detailsT1 = senseTemp1;
+  detailsT2 = senseTemp2;
+  detailsT3 = senseTemp3;
+  detailsT4 = senseTemp4;
+  detailsT5 = senseTemp5;
+  detailsT6 = senseTemp6;
+  detailsT7 = senseTemp7;
+  detailsT8 = senseTemp8;
+  detailsVoltage = senseVoltage1;
+  detailsRH = senseHumid;
+  detailsPower = calculatedPower;
+  detailsCOP = calculatedCOP;
+  detailsI1 = senseCurrent1;
+  detailsPick = "";
+  detailsFP = "";
+  detailsUptime = "";
+  detailsIter = "";
+  detailsPrice = "";
+}
+
 void updateNextionDisplay() {
+  // variable acquisition to be displayed
+  displayVariableAcquire();
   // Putting Things together
   rtcDayVal = rtc_day;
   rtcDayVal.concat(", ");
@@ -884,6 +925,96 @@ void updateNextionDisplay() {
   lcd.print('"');
   nextionWrite(); 
   // Details
+  lcd.print("detailsT1.txt=");
+  lcd.print('"');
+  lcd.print(detailsT1);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsT2.txt=");
+  lcd.print('"');
+  lcd.print(detailsT2);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsT3.txt=");
+  lcd.print('"');
+  lcd.print(detailsT3);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsT4.txt=");
+  lcd.print('"');
+  lcd.print(detailsT4);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsT5.txt=");
+  lcd.print('"');
+  lcd.print(detailsT5);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsT6.txt=");
+  lcd.print('"');
+  lcd.print(detailsT6);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsT7.txt=");
+  lcd.print('"');
+  lcd.print(detailsT7);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsT8.txt=");
+  lcd.print('"');
+  lcd.print(detailsT8);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsVoltage.txt=");
+  lcd.print('"');
+  lcd.print(detailsVoltage);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsRH.txt=");
+  lcd.print('"');
+  lcd.print(detailsRH);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsPower.txt=");
+  lcd.print('"');
+  lcd.print(detailsPower);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsCOP.txt=");
+  lcd.print('"');
+  lcd.print(detailsCOP);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsI1.txt=");
+  lcd.print('"');
+  lcd.print(detailsI1);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsPick.txt=");
+  lcd.print('"');
+  lcd.print(detailsPick);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsFP.txt=");
+  lcd.print('"');
+  lcd.print(detailsFP);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsUptime.txt=");
+  lcd.print('"');
+  lcd.print(detailsUptime);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsIter.txt=");
+  lcd.print('"');
+  lcd.print(detailsIter);
+  lcd.print('"');
+  nextionWrite();
+  lcd.print("detailsPrice.txt=");
+  lcd.print('"');
+  lcd.print(detailsPrice);
+  lcd.print('"');
+  nextionWrite();
 }
 
 void thingsTogether() {
